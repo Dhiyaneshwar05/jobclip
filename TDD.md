@@ -2,7 +2,7 @@
 
 **Author:** Dhiyanesh G
 **Date:** 2026-04-30
-**Status:** Draft — awaiting approval
+**Status:** Production (personal use)
 **Target:** Chromium-based browsers (Chrome, Arc, Edge, Brave)
 
 ---
