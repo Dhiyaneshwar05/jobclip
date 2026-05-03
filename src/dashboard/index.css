@@ -1,0 +1,55 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+html,
+body {
+  margin: 0;
+  padding: 0;
+}
+
+@media (prefers-color-scheme: dark) {
+  html,
+  body {
+    background: #0f1115;
+    color: #e5e7eb;
+  }
+  .bg-white { background-color: #171a21 !important; }
+  .bg-gray-50 { background-color: #12151b !important; }
+  .bg-gray-100 { background-color: #1f242d !important; }
+  .border-gray-200 { border-color: #2a2f3a !important; }
+  .border-gray-300 { border-color: #3a4150 !important; }
+  .border-gray-100 { border-color: #232833 !important; }
+  .text-gray-900 { color: #f3f4f6 !important; }
+  .text-gray-800 { color: #e5e7eb !important; }
+  .text-gray-700 { color: #cbd5e1 !important; }
+  .text-gray-600 { color: #9aa3b2 !important; }
+  .text-gray-500 { color: #808a99 !important; }
+  input, select, textarea {
+    background-color: #171a21;
+    color: #e5e7eb;
+  }
+  input::placeholder, textarea::placeholder { color: #6b7280; }
+  .bg-red-50 { background-color: #3a1a1a !important; }
+  .border-red-200 { border-color: #7a2a2a !important; }
+  .text-red-800 { color: #f4a8a8 !important; }
+  .hover\:bg-white:hover { background-color: #1f242d !important; }
+  .hover\:bg-gray-50:hover { background-color: #1f242d !important; }
+  .hover\:bg-gray-800:hover { background-color: #1f242d !important; }
+
+  .recharts-cartesian-axis-tick-value,
+  .recharts-legend-item-text,
+  .recharts-polar-angle-axis-tick-value,
+  .recharts-label {
+    fill: #cbd5e1 !important;
+    color: #cbd5e1 !important;
+  }
+  .recharts-cartesian-grid line {
+    stroke: #2a2f3a !important;
+  }
+  .recharts-default-tooltip {
+    background-color: #171a21 !important;
+    border-color: #3a4150 !important;
+    color: #e5e7eb !important;
+  }
+}
