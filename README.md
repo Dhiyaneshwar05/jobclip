@@ -9,19 +9,49 @@
 
 ---
 
-## Demo
+## 🎬 Demo
 
-<!-- Capture screenshots / GIF per docs/CAPTURE_CHECKLIST.md and drop them in docs/images/ -->
+### Capture flow — one click on a LinkedIn job page
 
 <p align="center">
-  <img src="docs/images/popup-linkedin.png" alt="jobclip popup capturing a LinkedIn job posting" width="720"/>
+  <img src="docs/images/popup-linkedin.png" alt="jobclip popup capturing an AI Engineer role at Teradata from LinkedIn — company, role, location, work-mode, seniority, resume variant, and status all pre-filled" width="460"/>
+</p>
+
+> Popup opens on the active tab. Company, role, location, work-mode, and seniority are pre-filled by the site-specific parser. You pick a resume variant + status and hit save — a row lands in your Google Sheet.
+
+---
+
+### Dashboard — applications over time, resume performance, platform mix
+
+<p align="center">
+  <img src="docs/images/dashboard.png" alt="jobclip dashboard overview: applications over time, status funnel, resume performance, platform breakdown" width="900"/>
 </p>
 
 <p align="center">
-  <img src="docs/images/dashboard.png" alt="jobclip dashboard with charts" width="720"/>
+  <img src="docs/images/dashboard-applications-table.png" alt="Top-10 companies chart and applications table showing per-row status, resume used, and notes" width="900"/>
 </p>
 
-<!-- End-to-end screen recording: docs/demo.gif -->
+> Everything is a React + Recharts view against your Google Sheet. Filter by date range, status, platform, or resume; export to CSV when you want to slice offline.
+
+---
+
+### Filter-aware views — zoom into one resume variant
+
+<p align="center">
+  <img src="docs/images/dashboard-filters.png" alt="Dashboard filtered to the rejected status — only one matching row shown, all charts re-aggregate" width="900"/>
+</p>
+
+> Every filter pill updates the Sheet query and re-aggregates the charts live. The row counter at the top reflects the current filter set.
+
+---
+
+### Options page — sign-in, tracker Sheet, resume registry
+
+<p align="center">
+  <img src="docs/images/options.png" alt="Options page: Google sign-in, active tracker Sheet, resume variants registry with AI-Heavy and FDE-Heavy variants, default preferences" width="560"/>
+</p>
+
+> Sign in with Google, create (or point to) a tracker Sheet in your Drive, register your resume variants, and pick sane defaults. All state lives in `chrome.storage` and your Drive — no servers.
 
 ---
 
@@ -62,26 +92,68 @@ Along the way it was a good excuse to ship a non-trivial Chrome extension end-to
 
 ## Architecture
 
+```mermaid
+flowchart LR
+    subgraph Browser["🌐 Browser tab (job page)"]
+        CS["content script<br/><sub>LinkedIn · Greenhouse · Lever · Ashby · Workday · JSON-LD fallback</sub>"]
+    end
+
+    subgraph Extension["🧩 jobclip extension (MV3)"]
+        POP["popup (React)<br/><sub>field review · resume picker · status</sub>"]
+        BG["background service worker<br/><sub>OAuth · Sheets API · dedup</sub>"]
+        OPT["options page<br/><sub>resume registry · tracker Sheet · prefs</sub>"]
+        DSH["dashboard (React + Recharts)<br/><sub>5 charts · filters · CSV export</sub>"]
+        ST[("chrome.storage<br/><sub>resumes · settings · cache</sub>")]
+    end
+
+    subgraph Google["☁️ Your Google account"]
+        GS[("Google Sheet<br/><sub>applications · resumes · meta</sub>")]
+    end
+
+    CS -- "parsed fields" --> POP
+    POP -- "save" --> BG
+    BG -- "OAuth (chrome.identity)<br/>Sheets API v4" --> GS
+    OPT <--> ST
+    OPT -- "create / link tracker" --> GS
+    DSH -- "read rows" --> GS
+    BG <--> ST
+
+    classDef primary fill:#4f46e5,stroke:#312e81,color:#fff
+    classDef storage fill:#0f766e,stroke:#064e3b,color:#fff
+    classDef ui fill:#1e293b,stroke:#475569,color:#e2e8f0
+    class CS,BG primary
+    class ST,GS storage
+    class POP,OPT,DSH ui
 ```
-           ┌─────────────────────────┐
-           │  content script         │   site-specific parser
-  page  →  │  (LinkedIn / GH / …)    │   + JSON-LD fallback
-           └───────────┬─────────────┘
-                       │ parsed fields
-                       ▼
-           ┌─────────────────────────┐
-           │  popup (React)          │   user confirms +
-           │  field review + resume  │   picks resume + status
-           └───────────┬─────────────┘
-                       │ save
-                       ▼
-           ┌─────────────────────────┐
-           │  background SW          │   OAuth → Sheets API
-           │  append row, dedup URL  │
-           └───────────┬─────────────┘
-                       │
-                       ▼
-              Google Sheet  ──►  dashboard (Recharts)
+
+### Data flow — capture to dashboard
+
+```mermaid
+sequenceDiagram
+    autonumber
+    actor U as User
+    participant P as Job page
+    participant CS as Content script
+    participant POP as Popup
+    participant BG as Background SW
+    participant GS as Google Sheets
+    participant D as Dashboard
+
+    U->>POP: Click toolbar icon<br/>(or Cmd/Ctrl+Shift+J)
+    POP->>CS: Request parse
+    CS->>P: Site-specific parser + JSON-LD fallback
+    P-->>CS: DOM / meta / JSON-LD
+    CS-->>POP: Parsed fields (company, role, salary, …)
+    U->>POP: Pick resume variant + status, save
+    POP->>BG: save(jobPayload)
+    BG->>GS: OAuth via chrome.identity
+    BG->>GS: Dedup by URL, append row
+    GS-->>BG: Row index
+    BG-->>POP: ✓ Saved
+    U->>D: Open dashboard
+    D->>GS: Read applications sheet
+    GS-->>D: Rows
+    D-->>U: Charts + filters
 ```
 
 Full design doc: [TDD.md](TDD.md).
